@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">{{ lesson.title }}</h2>
+    <p>{{ lesson.content|safe }}</p>
+
+    {% if lesson.video_url %}
+        <div class="text-center">
+            <iframe width="560" height="315" src="{{ lesson.video_url }}" frameborder="0" allowfullscreen></iframe>
+        </div>
+    {% endif %}
+
+    {% if lesson.pdf_material %}
+        <div>
+            <a href="{{ lesson.pdf_material }}" target="_blank" class="btn btn-primary">📚 Download PDF Notes</a>
+        </div>
+    {% else %}
+        <p>No lecture material available.</p>
+    {% endif %}
+
+    <h3 class="mt-4">📚 Quiz - Test Your Understanding</h3>
+    
+    {% if mcqs %}
+        <form id="quizForm">
+            {% for mcq in mcqs %}
+                <div class="card mt-3 p-3">
+                    <h5>{{ mcq.question_text }}</h5>
+                    <input type="radio" name="question_{{ mcq.id }}" value="A"> A) {{ mcq.option_a }} <br>
+                    <input type="radio" name="question_{{ mcq.id }}" value="B"> B) {{ mcq.option_b }} <br>
+                    <input type="radio" name="question_{{ mcq.id }}" value="C"> C) {{ mcq.option_c }} <br>
+                    <input type="radio" name="question_{{ mcq.id }}" value="D"> D) {{ mcq.option_d }} <br>
+                    <p class="feedback mt-2" id="feedback_{{ mcq.id }}" style="display: none;"></p>
+                </div>
+            {% endfor %}
+            <button type="button" class="btn btn-primary mt-3" onclick="checkAnswers()">Submit Quiz</button>
+            <button type="button" class="btn btn-secondary mt-3" onclick="resetQuiz()">Take Again</button>
+        </form>
+    {% else %}
+        <p class="text-muted">No quiz available for this lesson.</p>
+    {% endif %}
+
+    <a href="{% url 'module_detail' lesson.module.id %}" class="btn btn-secondary mt-4">⬅ Back to Module</a>
+
+    <!-- {% if all_completed %}
+    <div class="text-center mt-4">
+        <a href="{% url 'final_test' lesson.module.id %}" class="btn btn-warning">📝 Take Final Test</a>
+    </div>
+{% endif %} -->
+</div>
+
+<script>
+    function checkAnswers() {
+        // Get all MCQ elements
+        const mcqs = [
+            {% for mcq in mcqs %}
+                {
+                    id: "{{ mcq.id }}",
+                    correct_option: "{{ mcq.correct_option }}",
+                    explanation: "{{ mcq.explanation }}"
+                },
+            {% endfor %}
+        ];
+
+        mcqs.forEach(mcq => {
+            let selected = document.querySelector(`input[name="question_${mcq.id}"]:checked`);
+            let feedback = document.getElementById(`feedback_${mcq.id}`);
+
+            if (selected) {
+                if (selected.value === mcq.correct_option) {
+                    feedback.innerHTML = "✅ Correct!";
+                    feedback.style.color = "green";
+                } else {
+                    feedback.innerHTML = `❌ Incorrect. ${mcq.explanation}`;
+                    feedback.style.color = "red";
+                }
+                feedback.style.display = "block";
+            } else {
+                feedback.innerHTML = "⚠️ Please select an answer.";
+                feedback.style.color = "orange";
+                feedback.style.display = "block";
+            }
+        });
+    }
+
+    function resetQuiz() {
+        // Uncheck all radio buttons
+        document.querySelectorAll('input[type="radio"]').forEach(input => input.checked = false);
+        
+        // Hide feedback messages
+        document.querySelectorAll('.feedback').forEach(feedback => {
+            feedback.style.display = "none";
+            feedback.innerHTML = "";
+        });
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container text-center mt-5">
+        <h2>🎉 Payment Successful!</h2>
+        <p>Thank you for purchasing <strong>{{ course.title }}</strong>.</p>
+        
+        <div class="mt-4">
+            <a href="{% url 'course_detail' course.id %}" class="btn btn-primary">
+                📖 Go to Course
+            </a>
+            <a href="{% url 'course_list' %}" class="btn btn-secondary">
+                🔙 Back to Courses
+            </a>
+        </div>
+    </div>
+{% endblock %}

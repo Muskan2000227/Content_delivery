@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>🎓 My Purchased Courses</h2>
+
+{% if purchased_courses %}
+    <ul>
+        {% for course in purchased_courses %}
+            <li>
+                <a href="{% url 'course_detail' course.id %}"><strong>{{ course.title }}</strong></a>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>You have not purchased any courses yet.</p>
+    <a href="{% url 'course_list' %}" class="btn btn-primary">Browse Courses</a>
+{% endif %}
+
+{% endblock %}

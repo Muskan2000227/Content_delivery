@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">📝 Final Test</h2>
+    <p class="text-center">Answer the following questions to complete your course.</p>
+
+    {% if questions %}
+        <form id="finalTestForm">
+            {% for question in questions %}
+                <div class="card mt-3 p-3">
+                    <h5>{{ question.question }}</h5>
+                    <input type="radio" name="question_{{ question.id }}" value="A"> A) {{ question.option_a }} <br>
+                    <input type="radio" name="question_{{ question.id }}" value="B"> B) {{ question.option_b }} <br>
+                    <input type="radio" name="question_{{ question.id }}" value="C"> C) {{ question.option_c }} <br>
+                    <input type="radio" name="question_{{ question.id }}" value="D"> D) {{ question.option_d }} <br>
+                    <p class="feedback mt-2" id="feedback_{{ question.id }}" style="display: none;"></p>
+                </div>
+            {% endfor %}
+            <div class="text-center">
+                <button type="button" class="btn btn-primary mt-3" onclick="submitFinalTest()">Submit Test</button>
+                <button type="button" class="btn btn-secondary mt-3" onclick="resetTest()">Take Again</button>
+            </div>
+        </form>
+    {% else %}
+        <p class="text-muted text-center">No questions available for this final test.</p>
+    {% endif %}
+</div>
+
+<script>
+    function submitFinalTest() {
+        let correctCount = 0;
+        {% for question in questions %}
+            let selected = document.querySelector('input[name="question_{{ question.id }}"]:checked');
+            let feedback = document.getElementById("feedback_{{ question.id }}");
+
+            if (selected) {
+                if (selected.value === "{{ question.correct_option }}") {
+                    feedback.innerHTML = "✅ Correct!";
+                    feedback.style.color = "green";
+                    correctCount++;
+                } else {
+                    feedback.innerHTML = "❌ Incorrect.";
+                    feedback.style.color = "red";
+                }
+                feedback.style.display = "block";
+            } else {
+                feedback.innerHTML = "⚠️ Please select an answer.";
+                feedback.style.color = "orange";
+                feedback.style.display = "block";
+            }
+        {% endfor %}
+
+        alert("Final Test Submitted! You got " + correctCount + " correct answers.");
+    }
+
+    function resetTest() {
+        let inputs = document.querySelectorAll('input[type="radio"]');
+        inputs.forEach(input => input.checked = false);
+
+        let feedbacks = document.querySelectorAll('.feedback');
+        feedbacks.forEach(feedback => feedback.style.display = "none");
+    }
+</script>
+
+{% endblock %}

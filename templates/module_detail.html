@@ -1,0 +1,15 @@
+
+<!-- 3rd page lessons -->
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ module.title }}</h2>
+<h3>Lessons:</h3>
+<ul>
+    {% for lesson in lessons %}
+        <li>
+            <a href="{% url 'lesson_detail' lesson.id %}">{{ lesson.title }}</a>
+        </li>
+    {% endfor %}
+</ul>
+<a href="{% url 'course_detail' module.course.id %}">Back to Course</a>
+{% endblock %}
