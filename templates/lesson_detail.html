@@ -22,6 +22,7 @@
     
     {% if mcqs %}
         <form id="quizForm">
+            {% csrf_token %}
             {% for mcq in mcqs %}
                 <div class="card mt-3 p-3">
                     <h5>{{ mcq.question_text }}</h5>

@@ -58,6 +58,8 @@ urlpatterns = [
     # Final Test
     path('final-test/<int:course_id>/', views.final_test, name='final_test'),
 
+    path('certificate/',views.certificate_view, name='certificate_page'), 
+
 ]
 
 if settings.DEBUG:

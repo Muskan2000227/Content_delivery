@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <h2>🎉 Congratulations, {{ user_name }}! 🎉</h2>
+    <p>You have successfully completed the course. Click the button below to download your certificate.</p>
+    
+    <div class="mt-4">
+        <a href="{{ cert_path }}" class="btn btn-success" download>📜 Download Certificate</a>
+    </div>
+</div>
+{% endblock %}

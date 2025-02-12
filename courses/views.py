@@ -291,6 +291,19 @@ def complete_lesson(request, lesson_id):
 
 
 
+# def final_test(request, course_id):
+#     user_id = request.session.get('user_id')
+#     if not user_id:
+#         return redirect('login')
+
+#     user = get_object_or_404(register_model, id=user_id)
+
+#     # ✅ Corrected: Filter by `course_id`, not `module_id`
+#     questions = list(FinalTest.objects.filter(course_id=course_id))  
+#     random.shuffle(questions)  # Shuffle questions
+
+#     return render(request, 'final_test.html', {'questions': questions[:10]})
+
 def final_test(request, course_id):
     user_id = request.session.get('user_id')
     if not user_id:
@@ -298,8 +311,74 @@ def final_test(request, course_id):
 
     user = get_object_or_404(register_model, id=user_id)
 
-    # ✅ Corrected: Filter by `course_id`, not `module_id`
     questions = list(FinalTest.objects.filter(course_id=course_id))  
-    random.shuffle(questions)  # Shuffle questions
+    random.shuffle(questions)
+
+    if request.method == "POST":
+        total_questions = len(questions)
+        correct_answers = 0
+
+        for question in questions:
+            selected_answer = request.POST.get(f"question_{question.id}")
+            if selected_answer == question.correct_option:
+                correct_answers += 1
+
+        score_percentage = (correct_answers / total_questions) * 100
+
+        if score_percentage >= 75:
+            request.session['certified_user'] = user.username  # ✅ Store name in session
+            generate_certificate(user.username)  # ✅ Generate certificate
+            return redirect('certificate_page')  # ✅ Redirect to certificate preview page
+
+        return render(request, 'final_test.html', {'questions': questions[:10], 'message': "Test not cleared. Try again."})
 
     return render(request, 'final_test.html', {'questions': questions[:10]})
+
+from django.http import HttpResponse
+from PIL import Image, ImageDraw, ImageFont
+import os
+from .models import register_model, FinalTest
+import random
+
+def generate_certificate(user_name):
+    """Generate a certificate with the user's name and return a downloadable PDF."""
+    template_path = "static/certificate_template.png"  # ✅ Ensure this path is correct
+    font_path = "static/font/Roboto-Bold.ttf"  # ✅ Use any suitable font
+
+    # Open the template image
+    img = Image.open(template_path)
+    draw = ImageDraw.Draw(img)
+
+    # Load a font
+    font_size = 60
+    font = ImageFont.truetype(font_path, font_size)
+
+    # Define text position (Modify based on your template)
+    text_position = (700, 700)  
+
+    # Add user's name
+    draw.text(text_position, user_name, fill="black", font=font)
+
+    # Save as a temporary file
+    cert_path = f"media/certificates/{user_name}_certificate.png"
+    os.makedirs(os.path.dirname(cert_path), exist_ok=True)
+    img.save(cert_path)
+
+    # Convert to PDF
+    pdf_path = f"media/certificates/{user_name}_certificate.pdf"
+    img.convert("RGB").save(pdf_path)
+
+    # Return file as response for download
+    with open(pdf_path, "rb") as pdf_file:
+        response = HttpResponse(pdf_file.read(), content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{user_name}_certificate.pdf"'
+        return response
+
+
+def certificate_view(request):
+    user_name = request.session.get('certified_user')
+    # Construct absolute file path
+    cert_file = os.path.join(settings.MEDIA_ROOT, "certificates", f"{user_name}_certificate.pdf")
+    # Use MEDIA_URL for correct file serving
+    cert_url = f"{settings.MEDIA_URL}certificates/{user_name}_certificate.pdf"
+    return render(request, "certificate_page.html", {"user_name": user_name, "cert_path": cert_url})
