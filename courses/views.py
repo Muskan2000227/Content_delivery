@@ -251,7 +251,7 @@ def payment_success(request, course_id):
 
 
 
-# To show all the buyed courses
+# To show all the bought courses
 from django.shortcuts import render
 from .models import register_model
 
