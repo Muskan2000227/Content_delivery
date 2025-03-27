@@ -144,3 +144,11 @@ CKEDITOR_CONFIGS = {
 
 STRIPE_PUBLISHABLE_KEY = "pk_test_51QqrEs4MhOFC7dCyUAFTGyTRnCSxBb7amNTzK9mYYDnVTwWY2VNNLWOiDxTeJUTAqQvE3n1CVgWdrcDjM8TZzGdR00b4O6ojqA"
 STRIPE_SECRET_KEY = "sk_test_51QqrEs4MhOFC7dCy3QruWNQ2mCz0WbFpqRMHovvB6Qmr6ZeRqo6Gc8XhLm1onwj3yGlwqj4bLnmFegASArf2tst300CbfzBN3s"  
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "imagetool27@gmail.com"  # Replace with your email
+EMAIL_HOST_PASSWORD = "ptcx mlnf xyun wxgw"  # Use an App Password, not your main password
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

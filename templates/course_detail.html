@@ -11,6 +11,15 @@
             <li>
                 <a href="{% url 'module_detail' module.id %}">{{ module.title }}</a>
             </li>
+            <ul>
+        {% for lesson in module.lesson_set.all %}
+            {% if lesson.id in completed_lesson_ids %}
+                <li style="color: green; font-weight: bold;">✔️ {{ lesson.title }}</li>
+            {% else %}
+                <li style="color: black;">{{ lesson.title }}</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
         {% endfor %}
     </ul>
 {% else %}

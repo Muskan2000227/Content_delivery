@@ -31,13 +31,13 @@
 <script>
 function submitFinalTest() {
     let correctCount = 0;
-    let totalQuestions = {{ questions|length }};  // Get total number of questions from Django
+    let totalQuestions = {{ questions|length }};  
 
     document.querySelectorAll(".card").forEach((questionCard) => {
         let questionId = questionCard.querySelector("input[type='radio']").name.split("_")[1];
         let selected = questionCard.querySelector(`input[name="question_${questionId}"]:checked`);
         let feedback = document.getElementById("feedback_" + questionId);
-        let correctOption = questionCard.getAttribute("data-correct"); // ✅ Fetch correct answer from model
+        let correctOption = questionCard.getAttribute("data-correct");
 
         if (selected) {
             if (selected.value === correctOption) {
@@ -45,12 +45,10 @@ function submitFinalTest() {
                 feedback.style.color = "green";
                 correctCount++;
             } else {
-                feedback.innerHTML = `❌ Incorrect.`;
                 feedback.style.color = "red";
             }
             feedback.style.display = "block";
         } else {
-            feedback.innerHTML = "⚠️ Please select an answer.";
             feedback.style.color = "orange";
             feedback.style.display = "block";
         }
@@ -58,12 +56,11 @@ function submitFinalTest() {
 
     let percentage = (correctCount / totalQuestions) * 100;
 
-
-    if (percentage <= 75) {
-        alert("❌ You scored " + percentage.toFixed(2) + "%. You need at least 75% to pass.");
+    if (percentage < 75) {  
+        alert("❌ You scored " + percentage.toFixed(2) + "%. You need at least 75% to pass. Try again!");  
     }
-    
 }
+
 
 function resetTest() {
     document.querySelectorAll('input[type="radio"]').forEach(input => input.checked = false);

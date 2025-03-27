@@ -12,41 +12,78 @@ def course_list(request):
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Course,register_model, UserLessonCompletion, Lesson
 
+# def course_detail(request, course_id):
+#     course = get_object_or_404(Course, id=course_id)
+#     modules = course.module_set.all()
+
+#     # ✅ Check if the user has purchased the course
+#     user_has_purchased = False
+#     user_email = request.session.get('user_email')
+
+#     if request.user.is_authenticated:
+#         try:
+#             user_record = register_model.objects.get(email=user_email)
+#             user_has_purchased = user_record.purchased_courses.filter(id=course.id).exists()
+
+#             # ✅ Count total lessons in the course
+#             total_lessons = Lesson.objects.filter(module__course=course).count()
+#             print(f"Total Lessons in Course {course_id}: {total_lessons}")
+#             # ✅ Count completed lessons for the user
+#             completed_lessons = UserLessonCompletion.objects.filter(
+#                 user=user_record, lesson__module__course=course, completed=True
+#             ).count()
+#             print(f"Completed Lessons by User {user_email}: {completed_lessons}") 
+
+#             # ✅ Check if all lessons are completed
+#             all_completed = completed_lessons == total_lessons
+
+#         except register_model.DoesNotExist:
+#             all_completed = False  # Default to False if user not found
+
+#         return render(request, "course_detail.html", {
+#         "course": course,
+#         "modules": modules,
+#         "user_has_purchased": user_has_purchased,
+#         "all_completed": all_completed,
+#         "total_lessons": total_lessons  # ✅ Pass lesson count to template
+#         })
+
 def course_detail(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     modules = course.module_set.all()
 
-    # ✅ Check if the user has purchased the course
     user_has_purchased = False
     user_email = request.session.get('user_email')
+
+    completed_lesson_ids = []  # ✅ Store completed lesson IDs
 
     if request.user.is_authenticated:
         try:
             user_record = register_model.objects.get(email=user_email)
             user_has_purchased = user_record.purchased_courses.filter(id=course.id).exists()
 
-            # ✅ Count total lessons in the course
             total_lessons = Lesson.objects.filter(module__course=course).count()
-            print(f"Total Lessons in Course {course_id}: {total_lessons}")
-            # ✅ Count completed lessons for the user
+            
             completed_lessons = UserLessonCompletion.objects.filter(
                 user=user_record, lesson__module__course=course, completed=True
-            ).count()
-            print(f"Completed Lessons by User {user_email}: {completed_lessons}") 
+            )
 
-            # ✅ Check if all lessons are completed
-            all_completed = completed_lessons == total_lessons
+            completed_lesson_ids = list(completed_lessons.values_list("lesson_id", flat=True))  # ✅ Get completed lesson IDs
+            print(completed_lesson_ids)
+            all_completed = len(completed_lesson_ids) == total_lessons
 
         except register_model.DoesNotExist:
-            all_completed = False  # Default to False if user not found
+            all_completed = False  
 
-        return render(request, "course_detail.html", {
+    return render(request, "course_detail.html", {
         "course": course,
         "modules": modules,
         "user_has_purchased": user_has_purchased,
         "all_completed": all_completed,
-        "total_lessons": total_lessons  # ✅ Pass lesson count to template
-        })
+        "total_lessons": total_lessons,
+        "completed_lesson_ids": completed_lesson_ids  # ✅ Send completed lesson IDs
+    })
+
 
 
 
@@ -114,8 +151,10 @@ def lesson_detail(request, lesson_id):
                 user=user_record, lesson=lesson
             )
             if not completion.completed:
+
                 completion.completed = True
                 completion.save()
+            
 
     return render(request, "lesson_detail.html", {"lesson": lesson,'mcqs': mcqs})
 
@@ -270,23 +309,23 @@ def index(request):
     return render(request,'index.html')
 
 
-from django.http import JsonResponse
-def complete_lesson(request, lesson_id):
-    if request.user.is_authenticated:
-        user = request.user
-        lesson = get_object_or_404(Lesson, id=lesson_id)
+# from django.http import JsonResponse
+# def complete_lesson(request, lesson_id):
+#     if request.user.is_authenticated:
+#         user = request.user
+#         lesson = get_object_or_404(Lesson, id=lesson_id)
 
-        # Try to find an existing completion record
-        completion, created = UserLessonCompletion.objects.get_or_create(user=user, lesson=lesson)
+#         # Try to find an existing completion record
+#         completion, created = UserLessonCompletion.objects.get_or_create(user=user, lesson=lesson)
         
-        # Update completion status
-        if not completion.completed:
-            completion.completed = True
-            completion.save()
+#         # Update completion status
+#         if not completion.completed:
+#             completion.completed = True
+#             completion.save()
 
-        return JsonResponse({"status": "success", "message": "Lesson marked as completed!"})
+#         return JsonResponse({"status": "success", "message": "Lesson marked as completed!"})
     
-    return JsonResponse({"status": "error", "message": "User not authenticated."})
+#     return JsonResponse({"status": "error", "message": "User not authenticated."})
 
 
 
@@ -304,12 +343,43 @@ def complete_lesson(request, lesson_id):
 
 #     return render(request, 'final_test.html', {'questions': questions[:10]})
 
+# def final_test(request, course_id):
+#     user_id = request.session.get('user_id')
+#     if not user_id:
+#         return redirect('login')
+
+#     user = get_object_or_404(register_model, id=user_id)
+
+#     questions = list(FinalTest.objects.filter(course_id=course_id))  
+#     random.shuffle(questions)
+
+#     if request.method == "POST":
+#         total_questions = len(questions)
+#         correct_answers = 0
+
+#         for question in questions:
+#             selected_answer = request.POST.get(f"question_{question.id}")
+#             if selected_answer == question.correct_option:
+#                 correct_answers += 1
+
+#         score_percentage = (correct_answers / total_questions) * 100
+
+#         if score_percentage >= 75:
+#             request.session['certified_user'] = user.username  # ✅ Store name in session
+#             generate_certificate(user.username)  # ✅ Generate certificate
+#             return redirect('certificate_page')  # ✅ Redirect to certificate preview page
+
+#         return render(request, 'final_test.html', {'questions': questions[:10], 'message': "Test not cleared. Try again."})
+
+#     return render(request, 'final_test.html', {'questions': questions[:10]})
+
+from django.utils.html import strip_tags
 def final_test(request, course_id):
-    user_id = request.session.get('user_id')
-    if not user_id:
+    user_email = request.session.get('user_email')  
+    if not user_email:
         return redirect('login')
 
-    user = get_object_or_404(register_model, id=user_id)
+    user = get_object_or_404(register_model, email=user_email)  # Fetch user by email
 
     questions = list(FinalTest.objects.filter(course_id=course_id))  
     random.shuffle(questions)
@@ -326,13 +396,16 @@ def final_test(request, course_id):
         score_percentage = (correct_answers / total_questions) * 100
 
         if score_percentage >= 75:
-            request.session['certified_user'] = user.username  # ✅ Store name in session
-            generate_certificate(user.username)  # ✅ Generate certificate
-            return redirect('certificate_page')  # ✅ Redirect to certificate preview page
+            clean_username = strip_tags(user.username)  # Remove HTML tags if present
+            request.session['certified_user'] = clean_username
+            generate_certificate(clean_username)
+            return redirect('certificate_page')  # Redirect to certificate preview page
 
-        return render(request, 'final_test.html', {'questions': questions[:10], 'message': "Test not cleared. Try again."})
+        return render(request, 'final_test.html', {'questions': questions})  
 
-    return render(request, 'final_test.html', {'questions': questions[:10]})
+    return render(request, 'final_test.html', {'questions': questions})
+
+
 
 from django.http import HttpResponse
 from PIL import Image, ImageDraw, ImageFont
@@ -360,25 +433,53 @@ def generate_certificate(user_name):
     draw.text(text_position, user_name, fill="black", font=font)
 
     # Save as a temporary file
-    cert_path = f"media/certificates/{user_name}_certificate.png"
-    os.makedirs(os.path.dirname(cert_path), exist_ok=True)
-    img.save(cert_path)
+    # cert_path = f"media/certificates/{user_name}_certificate.png"
+    # os.makedirs(os.path.dirname(cert_path), exist_ok=True)
+    # img.save(cert_path)
 
     # Convert to PDF
     pdf_path = f"media/certificates/{user_name}_certificate.pdf"
     img.convert("RGB").save(pdf_path)
-
+    return pdf_path 
     # Return file as response for download
-    with open(pdf_path, "rb") as pdf_file:
-        response = HttpResponse(pdf_file.read(), content_type="application/pdf")
-        response["Content-Disposition"] = f'attachment; filename="{user_name}_certificate.pdf"'
-        return response
+    # with open(pdf_path, "rb") as pdf_file:
+    #     response = HttpResponse(pdf_file.read(), content_type="application/pdf")
+    #     response["Content-Disposition"] = f'attachment; filename="{user_name}_certificate.pdf"'
+    #     return response
 
 
 def certificate_view(request):
-    user_name = request.session.get('certified_user')
+    user_name = request.session.get('certified_user'9)
     # Construct absolute file path
-    cert_file = os.path.join(settings.MEDIA_ROOT, "certificates", f"{user_name}_certificate.pdf")
+    # cert_file = os.path.join(settings.MEDIA_ROOT, "certificates", f"{user_name}_certificate.pdf")
     # Use MEDIA_URL for correct file serving
     cert_url = f"{settings.MEDIA_URL}certificates/{user_name}_certificate.pdf"
     return render(request, "certificate_page.html", {"user_name": user_name, "cert_path": cert_url})
+
+# from django.core.mail import EmailMessage
+# from django.conf import settings
+
+# def certificate_view(request):
+#     user_name = request.session.get('certified_user')
+#     user_email = request.session.get('user_email')  # Ensure email is stored in the session
+
+#     # Generate the certificate
+#     certificate_path = generate_certificate(user_name)  # Ensure this function returns the file path
+#     cert_url = f"{settings.MEDIA_URL}certificates/{user_name}_certificate.pdf"
+
+#     # ✅ Send email with attachment
+#     subject = "Your Certificate is Ready! 🎉"
+#     message = f"""
+#     Dear {user_name},
+
+#     Congratulations! 🎉 Your certificate is ready.
+#     Best Regards,  
+#     Your Organization
+#     """
+
+#     email = EmailMessage(subject, message, settings.DEFAULT_FROM_EMAIL, [user_email])
+#     email.attach_file(certificate_path)  # Attach the certificate PDF
+#     email.send()
+
+#     return render(request, "certificate_page.html", {"user_name": user_name, "cert_path": cert_url})
+

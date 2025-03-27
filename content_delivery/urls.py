@@ -46,7 +46,7 @@ urlpatterns = [
     path('Logout', views.logout, name='logout'),  
    
     # Mainpage(before login)
-    path('', views.mainpage, name='mainpage'),
+    path('main', views.mainpage, name='mainpage'),
 
     # Stripe
     path('create-checkout-session/<int:course_id>/', views.create_checkout_session, name='create-checkout-session'),
